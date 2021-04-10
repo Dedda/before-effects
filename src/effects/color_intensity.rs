@@ -31,8 +31,8 @@ impl TryFrom<&str> for ColorIntensity {
 fn channel_intensity(s: &str) -> Result<(usize, f32), ()> {
     let mut parts = s.split(":");
     let channel = rgba_char_to_channel_index(&parts.next().unwrap().chars().next().unwrap()).unwrap();
-    let intensity = parts.next().unwrap().parse().unwrap();
-    Ok((channel, intensity))
+    let intensity: f32 = parts.next().unwrap().parse().unwrap();
+    Ok((channel, intensity.clamp(0.0, 1.0)))
 }
 
 impl ColorIntensity {
