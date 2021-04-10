@@ -66,3 +66,7 @@ fn main() {
     image::save_buffer_with_format("output.png", &img.as_slice(), w, h, ColorType::Rgba8, ImageFormat::Png).unwrap();
     debugln!("[ OK ] {}", duration_to_human_string(&timer.lap().unwrap()));
 }
+
+pub fn rgba_char_to_channel_index(c: &char) -> Option<usize> {
+    "rgba".find(c.clone())
+}

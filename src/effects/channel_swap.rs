@@ -4,7 +4,8 @@ use opencl3::svm::SvmVec;
 
 use crate::exit_codes::{UNKNOWN_CHANNEL, UNKNOWN_KERNEL};
 use std::ffi::CString;
-use crate::effects::cl::run_in_out_pixel_based_kernel_1iv;
+use crate::effects::cl::{run_pixel_based_kernel_1v};
+use opencl3::types::cl_int;
 
 pub struct ChannelSwap {
     order: Vec<i32>,
@@ -41,7 +42,7 @@ impl ChannelSwap {
         let kernel_name: CString = CString::new("channel_swap").unwrap();
         let queue = context.default_queue();
         if let Some(kernel) = context.get_kernel(&kernel_name) {
-            let lap = run_in_out_pixel_based_kernel_1iv(&context, &kernel, byte_count / 4, &input, &mut output, &queue, &self.order);
+            let lap = run_pixel_based_kernel_1v::<cl_int>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, &self.order);
             println!("Swapped color channels of {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
         } else {
             exit!(UNKNOWN_KERNEL, "Cannot find kernel for CHANNEL_SWAP");

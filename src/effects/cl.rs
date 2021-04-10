@@ -5,7 +5,6 @@ use std::sync::Once;
 use std::ffi::CString;
 use opencl3::kernel::{Kernel, ExecuteKernel};
 use opencl3::svm::SvmVec;
-use opencl3::types::{cl_float, cl_int};
 use opencl3::command_queue::CommandQueue;
 use std::time::Duration;
 
@@ -31,11 +30,14 @@ pub fn compile_kernels(context: &mut Context) {
         timer.start().unwrap();
         let options = CString::new("").unwrap();
         context.build_program_from_source(&CString::new(include_str!("simple.cl")).unwrap(), &options).unwrap();
-        debugln!("[ OK ] {}", yatl::duration_to_human_string(&timer.lap().unwrap()));
+        context.build_program_from_source(&CString::new(include_str!("channel_swap.cl")).unwrap(), &options).unwrap();
+        context.build_program_from_source(&CString::new(include_str!("color_intensity.cl")).unwrap(), &options).unwrap();
+        let kernel_count = context.kernels().len();
+        debugln!("[ {} OK ] {}", kernel_count, yatl::duration_to_human_string(&timer.lap().unwrap()));
     });
 }
 
-pub fn run_in_out_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue) -> Duration {
+pub fn run_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue) -> Duration {
     let mut timer = yatl::Timer::new();
     timer.start().unwrap();
     let kernel_event = ExecuteKernel::new(kernel)
@@ -49,9 +51,9 @@ pub fn run_in_out_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input:
     timer.lap().unwrap()
 }
 
-pub fn run_in_out_pixel_based_kernel_1f(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: f32) -> Duration {
+pub fn run_pixel_based_kernel_1<T>(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: T) -> Duration where T: Clone {
     let svm_capability = context.get_svm_mem_capability();
-    let mut value_svm = SvmVec::<cl_float>::with_capacity(&context, svm_capability, 1);
+    let mut value_svm = SvmVec::<T>::with_capacity(&context, svm_capability, 1);
     value_svm.push(value);
     let mut timer = yatl::Timer::new();
     timer.start().unwrap();
@@ -66,9 +68,9 @@ pub fn run_in_out_pixel_based_kernel_1f(context: &Context, kernel: &Kernel, pixe
     timer.lap().unwrap()
 }
 
-pub fn run_in_out_pixel_based_kernel_1iv(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: &Vec<i32>) -> Duration {
+pub fn run_pixel_based_kernel_1v<T>(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: &Vec<T>) -> Duration where T: Clone {
     let svm_capability = context.get_svm_mem_capability();
-    let mut value_svm = SvmVec::<cl_int>::with_capacity(&context, svm_capability, value.len());
+    let mut value_svm = SvmVec::<T>::with_capacity(&context, svm_capability, value.len());
     value.iter().cloned().for_each(|v| value_svm.push(v));
     let mut timer = yatl::Timer::new();
     timer.start().unwrap();
