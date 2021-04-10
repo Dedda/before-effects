@@ -4,6 +4,7 @@ use std::ffi::CString;
 use opencl3::kernel::{ExecuteKernel, Kernel};
 use opencl3::command_queue::CommandQueue;
 use std::time::Duration;
+use crate::exit_codes::UNKNOWN_KERNEL;
 
 fn run_in_out_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue) -> Duration {
     let mut timer = yatl::Timer::new();
@@ -26,7 +27,7 @@ pub fn invert(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut outp
         let lap = run_in_out_pixel_based_kernel(&kernel, byte_count / 4, &input, &mut output, &queue);
         println!("Inverted {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
-        panic!("Cannot find kernel for INVERT");
+        exit!(UNKNOWN_KERNEL, "Cannot find kernel for INVERT");
     }
 }
 
@@ -37,7 +38,7 @@ pub fn greyscale(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut o
         let lap = run_in_out_pixel_based_kernel(&kernel, byte_count / 4, &input, &mut output, &queue);
         println!("Greyscaled {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
-        panic!("Cannot find kernel for GREYSCALE");
+        exit!(UNKNOWN_KERNEL, "Cannot find kernel for GREYSCALE");
     }
 }
 

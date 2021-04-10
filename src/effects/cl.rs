@@ -6,10 +6,10 @@ use std::ffi::CString;
 
 pub fn create_context() -> Context {
     let platform_ids = get_platforms().unwrap();
-    assert!(0 < platform_ids.len());
+    assert!(0 < platform_ids.len(), "Could not find any OpenCL platforms.");
     let platform_id = platform_ids.first().unwrap();
     let device_ids = opencl3::device::get_device_ids(platform_id.id(), CL_DEVICE_TYPE_GPU).unwrap();
-    assert!(0 < device_ids.len());
+    assert!(0 < device_ids.len(), "Could not find any OpenCL devices.");
     let devices: Vec<Device> = device_ids.into_iter().map(|id| Device::new(id)).collect();
     let device = devices.into_iter().next().unwrap();
 
