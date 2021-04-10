@@ -1,5 +1,5 @@
 use std::convert::TryFrom;
-use crate::effects::Effect::Invert;
+use crate::effects::Effect::{Invert, Greyscale};
 use opencl3::context::Context;
 use opencl3::svm::SvmVec;
 use opencl3::types::cl_uchar;
@@ -10,6 +10,7 @@ mod simple;
 
 pub enum Effect {
     Invert,
+    Greyscale,
 }
 
 impl TryFrom<&String> for Effect {
@@ -20,6 +21,7 @@ impl TryFrom<&String> for Effect {
         let name = split.next().unwrap();
         match name {
             "invert" => Ok(Invert),
+            "greyscale" => Ok(Greyscale),
             n => Err(format!("Unknown effect: {}", n)),
         }
     }
@@ -29,6 +31,7 @@ impl Effect {
     fn run(&self, context: &Context, byte_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>) {
         match self {
             Invert => simple::invert(&context, byte_count, input, output),
+            Greyscale => simple::greyscale(&context, byte_count, input, output),
         }
     }
 }
