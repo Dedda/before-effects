@@ -4,6 +4,7 @@ use opencl3::context::Context;
 use opencl3::svm::SvmVec;
 use opencl3::types::cl_uchar;
 use crate::effects::cl::compile_kernels;
+use yatl::{Timer, duration_to_human_string};
 
 mod cl;
 mod simple;
@@ -51,17 +52,25 @@ impl Effect {
 }
 
 pub fn run_effects(img: Vec<u8>, effects: Vec<Effect>) -> Vec<u8> {
+    let mut timer = Timer::new();
     let byte_count = img.len();
+    debug!("# Creating OpenCL context... ");
+    timer.start().unwrap();
     let mut context = cl::create_context();
     let svm_capability = context.get_svm_mem_capability();
+    debugln!("[ OK ] {}", duration_to_human_string(&timer.lap().unwrap()));
     compile_kernels(&mut context);
+    timer.lap().unwrap();
+    debug!("# Preparing buffers... ");
     let mut output_buffer = SvmVec::<cl_uchar>::with_capacity_zeroed(&context, svm_capability, byte_count);
     unsafe { output_buffer.set_len(byte_count) };
     let mut input_buffer = SvmVec::<cl_uchar>::with_capacity(&context, svm_capability, byte_count);
     for byte in img {
         input_buffer.push(byte);
     }
+    debugln!("[ OK ] {}", duration_to_human_string(&timer.lap().unwrap()));
     let mut swap_buffers = false;
+    debugln!("# Running {} effects", effects.len());
     for effect in effects {
         let (input, mut output) = match swap_buffers {
             true => (&output_buffer, &mut input_buffer),

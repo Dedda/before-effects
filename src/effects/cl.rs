@@ -21,7 +21,11 @@ pub fn create_context() -> Context {
 pub fn compile_kernels(context: &mut Context) {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
+        let mut timer = yatl::Timer::new();
+        debug!("# Compiling kernels... ");
+        timer.start().unwrap();
         let options = CString::new("").unwrap();
         context.build_program_from_source(&CString::new(include_str!("simple.cl")).unwrap(), &options).unwrap();
+        debugln!("[ OK ] {}", yatl::duration_to_human_string(&timer.lap().unwrap()));
     });
 }
