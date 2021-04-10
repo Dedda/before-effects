@@ -1,5 +1,5 @@
 use std::convert::TryFrom;
-use crate::effects::Effect::{Invert, Greyscale};
+use crate::effects::Effect::{Invert, Greyscale, Contrast, Brightness};
 use opencl3::context::Context;
 use opencl3::svm::SvmVec;
 use opencl3::types::cl_uchar;
@@ -11,6 +11,8 @@ mod simple;
 pub enum Effect {
     Invert,
     Greyscale,
+    Contrast(f32),
+    Brightness(f32,)
 }
 
 impl TryFrom<&String> for Effect {
@@ -22,6 +24,16 @@ impl TryFrom<&String> for Effect {
         match name {
             "invert" => Ok(Invert),
             "greyscale" => Ok(Greyscale),
+            "contrast" => {
+                let intensity: f32 = split.next().unwrap().parse().unwrap();
+                let intensity = intensity.clamp(0.0, 1.0);
+                Ok(Contrast(intensity))
+            },
+            "brightness" => {
+                let intensity: f32 = split.next().unwrap().parse().unwrap();
+                let intensity = intensity.clamp(0.0, 1.0);
+                Ok(Brightness(intensity))
+            },
             n => Err(format!("Unknown effect: {}", n)),
         }
     }
@@ -32,6 +44,8 @@ impl Effect {
         match self {
             Invert => simple::invert(&context, byte_count, input, output),
             Greyscale => simple::greyscale(&context, byte_count, input, output),
+            Contrast(intensity) => simple::contrast(&context, byte_count, input, output, intensity.clone()),
+            Brightness(intensity) => simple::brightness(&context, byte_count, input, output, intensity.clone()),
         }
     }
 }
