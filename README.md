@@ -11,3 +11,10 @@ Currently supported effects are:
 | ```greyscale```              | Grey scales the whole image. |
 | ```contrast=[Intensity]```   | Adjusts the contrast. Intensity is a number between 0 and 1 with 0.5 not having no effect at all. |
 | ```brightness=[Intensity]``` | Adjusts the brightness. Intensity is a number between 0 and 1 with 0.5 not having no effect at all. |
+
+## Debug output
+
+Debug output can be turned on by setting the DEBUG environment
+variable to any value (it just has to exist). For example:
+
+```$ DEBUG= before-effects test.png invert``` 
