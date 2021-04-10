@@ -11,6 +11,7 @@ Currently supported effects are:
 | ```greyscale```              | Grey scales the whole image. |
 | ```contrast=[Intensity]```   | Adjusts the contrast. Intensity is a number between 0 and 1 with 0.5 not having no effect at all. |
 | ```brightness=[Intensity]``` | Adjusts the brightness. Intensity is a number between 0 and 1 with 0.5 not having no effect at all. |
+| ```chswap=[r,g,b,a]```       | Swaps color channels from RGB to the given order. If there are only 3 arguments, the alpha channel will stay untouched. |
 
 ## Debug output
 

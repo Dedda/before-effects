@@ -1,42 +1,8 @@
 use opencl3::svm::SvmVec;
 use opencl3::context::Context;
 use std::ffi::CString;
-use opencl3::kernel::{ExecuteKernel, Kernel};
-use opencl3::command_queue::CommandQueue;
-use std::time::Duration;
 use crate::exit_codes::UNKNOWN_KERNEL;
-use opencl3::types::cl_float;
-
-fn run_in_out_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue) -> Duration {
-    let mut timer = yatl::Timer::new();
-    timer.start().unwrap();
-    let kernel_event = ExecuteKernel::new(kernel)
-        .set_arg_svm(input.as_ptr())
-        .set_arg_svm(output.as_mut_ptr())
-        .set_global_work_size(pixel_count)
-        .enqueue_nd_range(&queue)
-        .unwrap();
-
-    kernel_event.wait().unwrap();
-    timer.lap().unwrap()
-}
-
-fn run_in_out_pixel_based_kernel_1f(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: f32) -> Duration {
-    let svm_capability = context.get_svm_mem_capability();
-    let mut value_svm = SvmVec::<cl_float>::with_capacity(&context, svm_capability, 1);
-    value_svm.push(value);
-    let mut timer = yatl::Timer::new();
-    timer.start().unwrap();
-    let kernel_event = ExecuteKernel::new(kernel)
-        .set_arg_svm(input.as_ptr())
-        .set_arg_svm(output.as_mut_ptr())
-        .set_arg_svm(value_svm.as_ptr())
-        .set_global_work_size(pixel_count)
-        .enqueue_nd_range(&queue)
-        .unwrap();
-    kernel_event.wait().unwrap();
-    timer.lap().unwrap()
-}
+use crate::effects::cl::{run_in_out_pixel_based_kernel, run_in_out_pixel_based_kernel_1f};
 
 pub fn invert(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut output: &mut SvmVec<u8>) {
     let kernel_name: CString = CString::new("invert").unwrap();
@@ -79,5 +45,16 @@ pub fn brightness(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut 
         println!("Adjusted brightness of {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
         exit!(UNKNOWN_KERNEL, "Cannot find kernel for BRIGHTNESS");
+    }
+}
+
+pub fn schwurbel(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut output: &mut SvmVec<u8>, intensity: f32) {
+    let kernel_name: CString = CString::new("schwurbel").unwrap();
+    let queue = context.default_queue();
+    if let Some(kernel) = context.get_kernel(&kernel_name) {
+        let lap = run_in_out_pixel_based_kernel_1f(&context, &kernel, byte_count / 4, &input, &mut output, &queue, intensity);
+        println!("Schwurbeled {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
+    } else {
+        exit!(UNKNOWN_KERNEL, "Cannot find kernel for SCHWURBEL");
     }
 }

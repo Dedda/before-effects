@@ -3,6 +3,11 @@ use opencl3::platform::get_platforms;
 use opencl3::device::{CL_DEVICE_TYPE_GPU, Device};
 use std::sync::Once;
 use std::ffi::CString;
+use opencl3::kernel::{Kernel, ExecuteKernel};
+use opencl3::svm::SvmVec;
+use opencl3::types::{cl_float, cl_int};
+use opencl3::command_queue::CommandQueue;
+use std::time::Duration;
 
 pub fn create_context() -> Context {
     let platform_ids = get_platforms().unwrap();
@@ -28,4 +33,52 @@ pub fn compile_kernels(context: &mut Context) {
         context.build_program_from_source(&CString::new(include_str!("simple.cl")).unwrap(), &options).unwrap();
         debugln!("[ OK ] {}", yatl::duration_to_human_string(&timer.lap().unwrap()));
     });
+}
+
+pub fn run_in_out_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue) -> Duration {
+    let mut timer = yatl::Timer::new();
+    timer.start().unwrap();
+    let kernel_event = ExecuteKernel::new(kernel)
+        .set_arg_svm(input.as_ptr())
+        .set_arg_svm(output.as_mut_ptr())
+        .set_global_work_size(pixel_count)
+        .enqueue_nd_range(&queue)
+        .unwrap();
+
+    kernel_event.wait().unwrap();
+    timer.lap().unwrap()
+}
+
+pub fn run_in_out_pixel_based_kernel_1f(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: f32) -> Duration {
+    let svm_capability = context.get_svm_mem_capability();
+    let mut value_svm = SvmVec::<cl_float>::with_capacity(&context, svm_capability, 1);
+    value_svm.push(value);
+    let mut timer = yatl::Timer::new();
+    timer.start().unwrap();
+    let kernel_event = ExecuteKernel::new(kernel)
+        .set_arg_svm(input.as_ptr())
+        .set_arg_svm(output.as_mut_ptr())
+        .set_arg_svm(value_svm.as_ptr())
+        .set_global_work_size(pixel_count)
+        .enqueue_nd_range(&queue)
+        .unwrap();
+    kernel_event.wait().unwrap();
+    timer.lap().unwrap()
+}
+
+pub fn run_in_out_pixel_based_kernel_1iv(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: &Vec<i32>) -> Duration {
+    let svm_capability = context.get_svm_mem_capability();
+    let mut value_svm = SvmVec::<cl_int>::with_capacity(&context, svm_capability, value.len());
+    value.iter().cloned().for_each(|v| value_svm.push(v));
+    let mut timer = yatl::Timer::new();
+    timer.start().unwrap();
+    let kernel_event = ExecuteKernel::new(kernel)
+        .set_arg_svm(input.as_ptr())
+        .set_arg_svm(output.as_mut_ptr())
+        .set_arg_svm(value_svm.as_ptr())
+        .set_global_work_size(pixel_count)
+        .enqueue_nd_range(&queue)
+        .unwrap();
+    kernel_event.wait().unwrap();
+    timer.lap().unwrap()
 }

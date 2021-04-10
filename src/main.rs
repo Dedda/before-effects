@@ -37,6 +37,7 @@ pub mod exit_codes {
     pub const NO_INPUT_FILE: i32 = 1;
     pub const UNKNOWN_KERNEL: i32 = 2;
     pub const UNKNOWN_EFFECT: i32 = 3;
+    pub const UNKNOWN_CHANNEL: i32 = 4;
 }
 
 fn main() {

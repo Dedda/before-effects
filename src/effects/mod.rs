@@ -1,11 +1,13 @@
 use std::convert::TryFrom;
-use crate::effects::Effect::{Invert, Greyscale, Contrast, Brightness};
+use crate::effects::Effect::{Invert, Greyscale, Contrast, Brightness, Schwurbel};
 use opencl3::context::Context;
 use opencl3::svm::SvmVec;
 use opencl3::types::cl_uchar;
 use crate::effects::cl::compile_kernels;
 use yatl::{Timer, duration_to_human_string};
+use crate::effects::channel_swap::ChannelSwap;
 
+mod channel_swap;
 mod cl;
 mod simple;
 
@@ -13,7 +15,9 @@ pub enum Effect {
     Invert,
     Greyscale,
     Contrast(f32),
-    Brightness(f32,)
+    Brightness(f32),
+    Schwurbel(f32),
+    ChannelSwap(ChannelSwap),
 }
 
 impl TryFrom<&String> for Effect {
@@ -35,6 +39,12 @@ impl TryFrom<&String> for Effect {
                 let intensity = intensity.clamp(0.0, 1.0);
                 Ok(Brightness(intensity))
             },
+            "schwurbel" => {
+                let intensity: f32 = split.next().unwrap().parse().unwrap();
+                let intensity = intensity.clamp(0.0, 1.0);
+                Ok(Schwurbel(intensity))
+            },
+            "chswap" => Ok(Effect::ChannelSwap(ChannelSwap::try_from(split.next().unwrap()).unwrap())),
             n => Err(format!("Unknown effect: {}", n)),
         }
     }
@@ -47,6 +57,8 @@ impl Effect {
             Greyscale => simple::greyscale(&context, byte_count, input, output),
             Contrast(intensity) => simple::contrast(&context, byte_count, input, output, intensity.clone()),
             Brightness(intensity) => simple::brightness(&context, byte_count, input, output, intensity.clone()),
+            Schwurbel(intensity) => simple::schwurbel(&context, byte_count, input, output, intensity.clone()),
+            Effect::ChannelSwap(chswap) => chswap.run(&context, byte_count, input, output),
         }
     }
 }

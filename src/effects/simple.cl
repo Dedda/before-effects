@@ -47,3 +47,25 @@ __kernel void brightness(__global uchar* in, __global uchar* out, __global float
     }
     out[pixel + 3] = in[pixel + 3];
 }
+
+__kernel void schwurbel(__global uchar* in, __global uchar* out, __global float* intensity)
+{
+    __private int pixel = get_global_id(0) * 4;
+    __private float power = intensity[0] + 1.0F;
+    for (__private char i = 0; i < 3; i++)
+    {
+        __private float color = (float) in[pixel + i];
+        color = pow(color, power);
+        out[pixel + i] = (uchar) color;
+    }
+    out[pixel + 3] = in[pixel + 3];
+}
+
+__kernel void channel_swap(__global uchar* in, __global uchar* out, __global int* order)
+{
+    __private int pixel = get_global_id(0) * 4;
+    for (__private char i = 0; i < 4; i++)
+    {
+        out[pixel + i] = in[pixel + order[i]];
+    }
+}
