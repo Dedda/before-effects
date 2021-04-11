@@ -31,7 +31,7 @@ pub fn contrast(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut ou
     let kernel_name: CString = CString::new("contrast").unwrap();
     let queue = context.default_queue();
     if let Some(kernel) = context.get_kernel(&kernel_name) {
-        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, intensity);
+        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, &intensity);
         println!("Adjusted contrast of {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
         exit!(UNKNOWN_KERNEL, "Cannot find kernel for CONTRAST");
@@ -42,7 +42,7 @@ pub fn brightness(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut 
     let kernel_name: CString = CString::new("brightness").unwrap();
     let queue = context.default_queue();
     if let Some(kernel) = context.get_kernel(&kernel_name) {
-        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, intensity);
+        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, &intensity);
         println!("Adjusted brightness of {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
         exit!(UNKNOWN_KERNEL, "Cannot find kernel for BRIGHTNESS");
@@ -53,7 +53,7 @@ pub fn schwurbel(context: &Context, byte_count: usize, input: &SvmVec<u8>, mut o
     let kernel_name: CString = CString::new("schwurbel").unwrap();
     let queue = context.default_queue();
     if let Some(kernel) = context.get_kernel(&kernel_name) {
-        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, intensity);
+        let lap = run_pixel_based_kernel_1::<cl_float>(&context, &kernel, byte_count / 4, &input, &mut output, &queue, &intensity);
         println!("Schwurbeled {} pixels in {}", byte_count / 4, yatl::duration_to_human_string(&lap));
     } else {
         exit!(UNKNOWN_KERNEL, "Cannot find kernel for SCHWURBEL");

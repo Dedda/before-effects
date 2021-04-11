@@ -7,9 +7,11 @@ use crate::effects::cl::compile_kernels;
 use yatl::{Timer, duration_to_human_string};
 use crate::effects::channel_swap::ChannelSwap;
 use crate::effects::color_intensity::ColorIntensity;
+use crate::effects::color_rotate::ColorRotate;
 
 mod channel_swap;
 mod color_intensity;
+mod color_rotate;
 mod cl;
 mod simple;
 
@@ -21,6 +23,7 @@ pub enum Effect {
     Schwurbel(f32),
     ChannelSwap(ChannelSwap),
     ColorIntensity(ColorIntensity),
+    ColorRotate(ColorRotate),
 }
 
 impl TryFrom<&String> for Effect {
@@ -49,6 +52,7 @@ impl TryFrom<&String> for Effect {
             },
             "chswap" => Ok(Effect::ChannelSwap(ChannelSwap::try_from(split.next().unwrap()).unwrap())),
             "intensity" => Ok(Effect::ColorIntensity(ColorIntensity::try_from(split.next().unwrap()).unwrap())),
+            "crotate" => Ok(Effect::ColorRotate(ColorRotate::try_from(split.next().unwrap()).unwrap())),
             n => Err(format!("Unknown effect: {}", n)),
         }
     }
@@ -64,6 +68,7 @@ impl Effect {
             Schwurbel(intensity) => simple::schwurbel(&context, byte_count, input, output, intensity.clone()),
             Effect::ChannelSwap(chswap) => chswap.run(&context, byte_count, input, output),
             Effect::ColorIntensity(color_intensity) => color_intensity.run(&context, byte_count, input, output),
+            Effect::ColorRotate(color_rotate) => color_rotate.run(&context, byte_count, input, output),
         }
     }
 }

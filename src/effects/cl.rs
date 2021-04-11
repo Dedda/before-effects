@@ -32,6 +32,7 @@ pub fn compile_kernels(context: &mut Context) {
         context.build_program_from_source(&CString::new(include_str!("simple.cl")).unwrap(), &options).unwrap();
         context.build_program_from_source(&CString::new(include_str!("channel_swap.cl")).unwrap(), &options).unwrap();
         context.build_program_from_source(&CString::new(include_str!("color_intensity.cl")).unwrap(), &options).unwrap();
+        context.build_program_from_source(&CString::new(include_str!("color_rotate.cl")).unwrap(), &options).unwrap();
         let kernel_count = context.kernels().len();
         debugln!("[ {} OK ] {}", kernel_count, yatl::duration_to_human_string(&timer.lap().unwrap()));
     });
@@ -51,10 +52,10 @@ pub fn run_pixel_based_kernel(kernel: &Kernel, pixel_count: usize, input: &SvmVe
     timer.lap().unwrap()
 }
 
-pub fn run_pixel_based_kernel_1<T>(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: T) -> Duration where T: Clone {
+pub fn run_pixel_based_kernel_1<T>(context: &Context, kernel: &Kernel, pixel_count: usize, input: &SvmVec<u8>, output: &mut SvmVec<u8>, queue: &CommandQueue, value: &T) -> Duration where T: Clone {
     let svm_capability = context.get_svm_mem_capability();
     let mut value_svm = SvmVec::<T>::with_capacity(&context, svm_capability, 1);
-    value_svm.push(value);
+    value_svm.push(value.clone());
     let mut timer = yatl::Timer::new();
     timer.start().unwrap();
     let kernel_event = ExecuteKernel::new(kernel)
